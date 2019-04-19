@@ -28,6 +28,10 @@ const widgets = {
       'numbers': require('./lambda/throttles/numbers'),
       'time-series': require('./lambda/throttles/time-series'),
     },
+    unreservedconcurrentexecutions: {
+      'numbers': require('./lambda/unreservedconcurrentexecutions/numbers'),
+      'time-series': require('./lambda/unreservedconcurrentexecutions/time-series'),
+    },
     iteratorage: {
       'numbers': require('./lambda/iterator-age/numbers'),
       'time-series': require('./lambda/iterator-age/time-series'),

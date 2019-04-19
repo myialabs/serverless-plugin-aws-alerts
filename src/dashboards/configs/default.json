@@ -93,7 +93,7 @@
       {
         "title": "Lambda Concurrency",
         "service": "lambda",
-        "metric": "unreservedConcurrentExecutions",
+        "metric": "unreservedconcurrentexecutions",
         "display": "time-series",
         "coordinates": {
           "x": 0, "y": 18,
