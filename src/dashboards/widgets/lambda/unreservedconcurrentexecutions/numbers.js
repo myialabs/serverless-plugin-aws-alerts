@@ -16,18 +16,9 @@ const createWidget = (config) => {
     }
   };
 
-  widget.properties.metrics = config.functions.map(f => ([
-    'AWS/Lambda',
-    'UnreservedConcurrentExecutions',
-    'FunctionName',
-    `${config.service}-${config.stage}-${f.name}`,
-    {
-      stat: 'SampleCount',
-      period: 2592000,
-      region: config.region,
-      label: f.name
-    }
-  ]));
+  widget.properties.metrics = [
+    [ "AWS/Lambda", "UnreservedConcurrentExecutions", { "period": 2592000, "stat": "SampleCount" } ]
+  ];
 
   return widget;
 };
