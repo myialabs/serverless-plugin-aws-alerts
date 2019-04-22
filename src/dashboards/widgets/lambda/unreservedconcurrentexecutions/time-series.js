@@ -18,7 +18,7 @@ const createWidget = (config) => {
   };
 
   widget.properties.metrics = [
-    [ "AWS/Lambda", "UnreservedConcurrentExecutions", { "period": 900, "stat": "SampleCount" } ]
+    [ "AWS/Lambda", "UnreservedConcurrentExecutions", { "period": 900, "stat": "Maximum" } ]
   ];
 
   return widget;
