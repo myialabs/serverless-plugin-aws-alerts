@@ -270,6 +270,12 @@ class AlertsPlugin {
 
     const functions = this.serverless.service
                           .getAllFunctions()
+                          .filter(
+                              functionName =>
+                                this.serverless.service.functions[functionName].dashboard == null ||
+                                this.serverless.service.functions[functionName].dashboard.enabled ===
+                                true
+                          )
                           .map(functionName => ({ name: functionName }));
 
     const cf = _.chain(dashboardTemplates)
