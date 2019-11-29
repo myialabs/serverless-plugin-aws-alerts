@@ -1,24 +1,24 @@
-"use strict";
+'use strict';
 
 // Try to remove this. Such a large package
-const _ = require("lodash");
+const _ = require('lodash');
 
-const Naming = require("./naming");
-const defaultDefinitions = require("./defaults/definitions");
+const Naming = require('./naming');
+const defaultDefinitions = require('./defaults/definitions');
 
-const dashboards = require("./dashboards");
+const dashboards = require('./dashboards')
 
 class AlertsPlugin {
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
 
-    this.awsProvider = this.serverless.getProvider("aws");
+    this.awsProvider = this.serverless.getProvider('aws');
     this.providerNaming = this.awsProvider.naming;
     this.naming = new Naming();
 
     this.hooks = {
-      "package:compileEvents": this.compile.bind(this)
+      'package:compileEvents': this.compile.bind(this),
     };
   }
 
@@ -41,11 +41,9 @@ class AlertsPlugin {
           throw new Error(`Alarm definition ${alarm} does not exist!`);
         }
 
-        result.push(
-          Object.assign({}, definition, {
-            name: alarm
-          })
-        );
+        result.push(Object.assign({}, definition, {
+          name: alarm
+        }));
       } else if (_.isObject(alarm)) {
         result.push(_.merge({}, definitions[alarm.name], alarm));
       }
@@ -55,8 +53,8 @@ class AlertsPlugin {
   }
 
   getGlobalAlarms(config, definitions) {
-    if (!config) throw new Error("Missing config argument");
-    if (!definitions) throw new Error("Missing definitions argument");
+    if (!config) throw new Error('Missing config argument');
+    if (!definitions) throw new Error('Missing definitions argument');
 
     const alarms = _.union(config.alarms, config.global, config.function);
 
@@ -64,8 +62,8 @@ class AlertsPlugin {
   }
 
   getFunctionAlarms(functionObj, config, definitions) {
-    if (!config) throw new Error("Missing config argument");
-    if (!definitions) throw new Error("Missing definitions argument");
+    if (!config) throw new Error('Missing config argument');
+    if (!definitions) throw new Error('Missing definitions argument');
 
     const alarms = functionObj.alarms;
     return this.getAlarms(alarms, definitions);
@@ -92,31 +90,25 @@ class AlertsPlugin {
       insufficientDataActions.push(alertTopics.insufficientData);
     }
 
-    const namespace = definition.pattern
-      ? this.awsProvider.naming.getStackName()
-      : definition.namespace;
+    const namespace = definition.pattern ?
+      this.awsProvider.naming.getStackName() :
+      definition.namespace;
 
-    const metricName = definition.pattern
-      ? this.naming.getPatternMetricName(definition.metric, functionRef)
-      : definition.metric;
+    const metricName = definition.pattern ?
+      this.naming.getPatternMetricName(definition.metric, functionRef) :
+      definition.metric;
 
-    const dimensions = definition.pattern
-      ? []
-      : [
-          {
-            Name: "FunctionName",
-            Value: {
-              Ref: functionRef
-            }
-          }
-        ];
+    const dimensions = definition.pattern ? [] : [{
+      Name: 'FunctionName',
+      Value: {
+        Ref: functionRef,
+      }
+    }];
 
-    const treatMissingData = definition.treatMissingData
-      ? definition.treatMissingData
-      : "missing";
+    const treatMissingData = definition.treatMissingData ? definition.treatMissingData : 'missing';
 
     const alarm = {
-      Type: "AWS::CloudWatch::Alarm",
+      Type: 'AWS::CloudWatch::Alarm',
       Properties: {
         Namespace: namespace,
         MetricName: metricName,
@@ -129,36 +121,30 @@ class AlertsPlugin {
         AlarmActions: alarmActions,
         InsufficientDataActions: insufficientDataActions,
         Dimensions: dimensions,
-        TreatMissingData: treatMissingData
+        TreatMissingData: treatMissingData,
       }
     };
 
-    const statisticValues = [
-      "SampleCount",
-      "Average",
-      "Sum",
-      "Minimum",
-      "Maximum"
-    ];
+    const statisticValues = [ 'SampleCount', 'Average', 'Sum', 'Minimum', 'Maximum'];
     if (_.includes(statisticValues, definition.statistic)) {
-      alarm.Properties.Statistic = definition.statistic;
+      alarm.Properties.Statistic = definition.statistic
     } else {
-      alarm.Properties.ExtendedStatistic = definition.statistic;
+      alarm.Properties.ExtendedStatistic = definition.statistic
     }
     return alarm;
   }
 
   getSnsTopicCloudFormation(topicName, notifications) {
-    const subscription = (notifications || []).map(n => ({
+    const subscription = (notifications || []).map((n) => ({
       Protocol: n.protocol,
       Endpoint: n.endpoint
     }));
 
     return {
-      Type: "AWS::SNS::Topic",
+      Type: 'AWS::SNS::Topic',
       Properties: {
         TopicName: topicName,
-        Subscription: subscription
+        Subscription: subscription,
       }
     };
   }
@@ -167,17 +153,15 @@ class AlertsPlugin {
     const alertTopics = {};
 
     if (config.topics) {
-      Object.keys(config.topics).forEach(key => {
+      Object.keys(config.topics).forEach((key) => {
         const topicConfig = config.topics[key];
         const isTopicConfigAnObject = _.isObject(topicConfig);
 
         const topic = isTopicConfigAnObject ? topicConfig.topic : topicConfig;
-        const notifications = isTopicConfigAnObject
-          ? topicConfig.notifications
-          : [];
+        const notifications = isTopicConfigAnObject ? topicConfig.notifications : [];
 
         if (topic) {
-          if (topic.indexOf("arn:") === 0) {
+          if (topic.indexOf('arn:') === 0) {
             alertTopics[key] = topic;
           } else {
             const cfRef = `AwsAlerts${_.upperFirst(key)}`;
@@ -186,7 +170,7 @@ class AlertsPlugin {
             };
 
             this.addCfResources({
-              [cfRef]: this.getSnsTopicCloudFormation(topic, notifications)
+              [cfRef]: this.getSnsTopicCloudFormation(topic, notifications),
             });
           }
         }
@@ -196,58 +180,43 @@ class AlertsPlugin {
     return alertTopics;
   }
 
-  getLogMetricCloudFormation(
-    alarm,
-    functionName,
-    normalizedFunctionName,
-    functionObj
-  ) {
+  getLogMetricCloudFormation(alarm, functionName, normalizedFunctionName, functionObj) {
     if (!alarm.pattern) return {};
 
-    const logMetricCFRefBase = this.naming.getLogMetricCloudFormationRef(
-      normalizedFunctionName,
-      alarm.name
-    );
+    const logMetricCFRefBase = this.naming.getLogMetricCloudFormationRef(normalizedFunctionName, alarm.name);
     const logMetricCFRefALERT = `${logMetricCFRefBase}ALERT`;
     const logMetricCFRefOK = `${logMetricCFRefBase}OK`;
 
     const cfLogName = this.providerNaming.getLogGroupLogicalId(functionName);
     const metricNamespace = this.providerNaming.getStackName();
     const logGroupName = this.providerNaming.getLogGroupName(functionObj.name);
-    const metricName = this.naming.getPatternMetricName(
-      alarm.metric,
-      normalizedFunctionName
-    );
+    const metricName = this.naming.getPatternMetricName(alarm.metric, normalizedFunctionName);
 
     return {
       [logMetricCFRefALERT]: {
-        Type: "AWS::Logs::MetricFilter",
+        Type: 'AWS::Logs::MetricFilter',
         DependsOn: cfLogName,
         Properties: {
           FilterPattern: alarm.pattern,
           LogGroupName: logGroupName,
-          MetricTransformations: [
-            {
-              MetricValue: 1,
-              MetricNamespace: metricNamespace,
-              MetricName: metricName
-            }
-          ]
+          MetricTransformations: [{
+            MetricValue: 1,
+            MetricNamespace: metricNamespace,
+            MetricName: metricName
+          }]
         }
       },
       [logMetricCFRefOK]: {
-        Type: "AWS::Logs::MetricFilter",
+        Type: 'AWS::Logs::MetricFilter',
         DependsOn: cfLogName,
         Properties: {
-          FilterPattern: "",
+          FilterPattern: '',
           LogGroupName: logGroupName,
-          MetricTransformations: [
-            {
-              MetricValue: 0,
-              MetricNamespace: metricNamespace,
-              MetricName: metricName
-            }
-          ]
+          MetricTransformations: [{
+            MetricValue: 0,
+            MetricNamespace: metricNamespace,
+            MetricName: metricName
+          }]
         }
       }
     };
@@ -256,39 +225,21 @@ class AlertsPlugin {
   compileAlarms(config, definitions, alertTopics) {
     const globalAlarms = this.getGlobalAlarms(config, definitions);
 
-    this.serverless.service.getAllFunctions().forEach(functionName => {
+    this.serverless.service.getAllFunctions().forEach((functionName) => {
       const functionObj = this.serverless.service.getFunction(functionName);
 
-      const normalizedFunctionName = this.providerNaming.getLambdaLogicalId(
-        functionName
-      );
+      const normalizedFunctionName = this.providerNaming.getLambdaLogicalId(functionName);
 
-      const functionAlarms = this.getFunctionAlarms(
-        functionObj,
-        config,
-        definitions
-      );
+      const functionAlarms = this.getFunctionAlarms(functionObj, config, definitions);
       const alarms = globalAlarms.concat(functionAlarms);
 
       const alarmStatements = alarms.reduce((statements, alarm) => {
-        const key = this.naming.getAlarmCloudFormationRef(
-          alarm.name,
-          functionName
-        );
-        const cf = this.getAlarmCloudFormation(
-          alertTopics,
-          alarm,
-          normalizedFunctionName
-        );
+        const key = this.naming.getAlarmCloudFormationRef(alarm.name, functionName);
+        const cf = this.getAlarmCloudFormation(alertTopics, alarm, normalizedFunctionName);
 
         statements[key] = cf;
 
-        const logMetricCF = this.getLogMetricCloudFormation(
-          alarm,
-          functionName,
-          normalizedFunctionName,
-          functionObj
-        );
+        const logMetricCF = this.getLogMetricCloudFormation(alarm, functionName, normalizedFunctionName, functionObj);
         _.merge(statements, logMetricCF);
 
         return statements;
@@ -301,10 +252,10 @@ class AlertsPlugin {
   getDashboardTemplates(configDashboards) {
     const configType = typeof configDashboards;
 
-    if (configType === "boolean") {
-      return ["default"];
-    } else if (configType === "string") {
-      return [configDashboards];
+    if (configType === 'boolean') {
+      return ['default']
+    } else if (configType === 'string') {
+      return [configDashboards]
     } else {
       return [].concat(configDashboards);
     }
@@ -318,38 +269,32 @@ class AlertsPlugin {
     const dashboardTemplates = this.getDashboardTemplates(configDashboards);
 
     const functions = this.serverless.service
-      .getAllFunctions()
-      .filter(
-        functionName =>
-          this.serverless.service.functions[functionName].dashboard == null ||
-          this.serverless.service.functions[functionName].dashboard.enabled ===
-            true
-      )
-      .map(functionName => ({ name: functionName }));
+                          .getAllFunctions()
+                          .filter(
+                              functionName =>
+                                this.serverless.service.functions[functionName].dashboard == null ||
+                                this.serverless.service.functions[functionName].dashboard.enabled ===
+                                true
+                          )
+                          .map(functionName => ({ name: functionName }));
 
     const cf = _.chain(dashboardTemplates)
       .uniq()
-      .reduce((acc, d) => {
-        const dashboard = dashboards.createDashboard(
-          service.service,
-          stage,
-          region,
-          functions,
-          d
-        );
+      .reduce( (acc, d) => {
+        const dashboard = dashboards.createDashboard(service.service, stage, region, functions, d);
 
-        const cfResource =
-          d === "default" ? "AlertsDashboard" : `AlertsDashboard${d}`;
-        const dashboardName =
-          d === "default"
-            ? `${service.service}-${stage}-${region}`
-            : `${service.service}-${stage}-${region}-${d}`;
+        const cfResource = d === 'default'
+          ? 'AlertsDashboard'
+          : `AlertsDashboard${d}`;
+        const dashboardName = d === 'default'
+          ? `${service.service}-${stage}-${region}`
+          : `${service.service}-${stage}-${region}-${d}`;
 
         acc[cfResource] = {
-          Type: "AWS::CloudWatch::Dashboard",
+          Type: 'AWS::CloudWatch::Dashboard',
           Properties: {
             DashboardName: dashboardName,
-            DashboardBody: JSON.stringify(dashboard)
+            DashboardBody: JSON.stringify(dashboard),
           }
         };
         return acc;
@@ -366,9 +311,7 @@ class AlertsPlugin {
     }
 
     if (config.stages && !_.includes(config.stages, this.options.stage)) {
-      this.serverless.cli.log(
-        `Warning: Not deploying alerts on stage ${this.options.stage}`
-      );
+      this.serverless.cli.log(`Warning: Not deploying alerts on stage ${this.options.stage}`);
       return;
     }
 
@@ -378,15 +321,12 @@ class AlertsPlugin {
     this.compileAlarms(config, definitions, alertTopics);
 
     if (config.dashboards) {
-      this.compileDashboards(config.dashboards);
+      this.compileDashboards(config.dashboards)
     }
   }
 
   addCfResources(resources) {
-    _.merge(
-      this.serverless.service.provider.compiledCloudFormationTemplate.Resources,
-      resources
-    );
+    _.merge(this.serverless.service.provider.compiledCloudFormationTemplate.Resources, resources);
   }
 }
 
