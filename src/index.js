@@ -325,7 +325,6 @@ class AlertsPlugin {
           this.serverless.service.functions[functionName].dashboard.enabled ===
             true
       )
-
       .map(functionName => ({ name: functionName }));
 
     const cf = _.chain(dashboardTemplates)
