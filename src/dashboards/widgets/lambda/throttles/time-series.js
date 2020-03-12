@@ -17,18 +17,9 @@ const createWidget = (config) => {
     }
   };
 
-  widget.properties.metrics = config.functions.map(f => ([
-    'AWS/Lambda',
-    'Throttles',
-    'FunctionName',
-    `${config.service}-${config.stage}-${f.name}`,
-    {
-      stat: 'Sum',
-      period: 900,
-      region: config.region,
-      label: f.name
-    }
-  ]));
+  widget.properties.metrics = [
+    [{ "expression": "SEARCH('{AWS/Lambda,FunctionName} MetricName=\"Throttles\"', 'Sum', 900)", "label": "[max: ${MAX}, avg: ${AVG}]" }]
+  ];
 
   return widget;
 };

@@ -16,18 +16,9 @@ const createWidget = (config) => {
     }
   };
 
-  widget.properties.metrics = config.functions.map(f => ([
-    'AWS/Lambda',
-    'IteratorAge',
-    'FunctionName',
-    `${config.service}-${config.stage}-${f.name}`,
-    {
-      stat: 'Average',
-      period: 2592000,
-      region: config.region,
-      label: f.name
-    }
-  ]));
+  widget.properties.metrics = [
+    [{ "expression": "SEARCH('{AWS/Lambda,FunctionName} MetricName=\"IteratorAge\"', 'Average', 2592000)"}]
+  ];
 
   return widget;
 };
