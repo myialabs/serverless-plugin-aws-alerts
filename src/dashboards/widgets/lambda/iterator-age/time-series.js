@@ -17,33 +17,10 @@ const createWidget = (config) => {
     }
   };
 
-  widget.properties.metrics = config.functions.reduce((accum, f) => {
-    return accum.concat([
-      [
-        'AWS/Lambda',
-        'IteratorAge',
-        'FunctionName',
-        `${config.service}-${config.stage}-${f.name}`,
-        {
-          stat: 'p50',
-          period: 900,
-          region: config.region,
-          label: `${f.name} p50`,
-        }
-      ],[
-        'AWS/Lambda',
-        'IteratorAge',
-        'FunctionName',
-        `${config.service}-${config.stage}-${f.name}`,
-        {
-          stat: 'p90',
-          period: 900,
-          region: config.region,
-          label: `${f.name} p90`,
-        }
-      ]
-    ]);
-  }, []);
+  widget.properties.metrics = [
+    [{ "expression": "SEARCH('{AWS/Lambda,FunctionName} MetricName=\"IteratorAge\"', 'p50', 900)", "label": "[max: ${MAX}, avg: ${AVG}]" }],
+    [{ "expression": "SEARCH('{AWS/Lambda,FunctionName} MetricName=\"IteratorAge\"', 'p90', 900)", "label": "[max: ${MAX}, avg: ${AVG}]" }]
+  ];
 
   return widget;
 };

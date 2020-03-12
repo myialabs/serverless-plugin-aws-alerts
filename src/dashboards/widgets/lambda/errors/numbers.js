@@ -16,18 +16,9 @@ const createWidget = (config) => {
     }
   };
 
-  widget.properties.metrics = config.functions.map(f => ([
-    'AWS/Lambda',
-    'Errors',
-    'FunctionName',
-    `${config.service}-${config.stage}-${f.name}`,
-    {
-      stat: 'Sum',
-      period: 2592000,
-      region: config.region,
-      label: f.name
-    }
-  ]));
+  widget.properties.metrics = [
+    [{ "expression": "SEARCH('{AWS/Lambda,FunctionName} MetricName=\"Errors\"', 'Sum', 2592000)"}]
+  ];
 
   return widget;
 };
